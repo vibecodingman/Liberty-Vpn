@@ -1,7 +1,7 @@
 name: Liberty VPN Own Build
 
 on:
-  workflow_dispatch:
+  workflow_dispatch: # Позволяет запускать сборку вручную кнопкой в Actions
 
 jobs:
   build:
@@ -18,26 +18,15 @@ jobs:
 
       - name: Build Pure Android APK Without Gradle
         run: |
-          # 1. Создаем структуру
+          # 1. Создаем структуру папок для сборки
           mkdir -p app/src/main/java/com/liberty/vpn
           mkdir -p app/src/main/res/values
           mkdir -p build/gen build/obj build/apk
           
-          # 2. Записываем Манифест с точными системными атрибутами package и name
-          cat << 'EOF' > app/src/main/AndroidManifest.xml
-          <manifest xmlns:android="http://android.com" package="com.liberty.vpn">
-              <application android:label="Liberty VPN">
-                  <activity android:name="com.liberty.vpn.MainActivity" android:exported="true">
-                      <intent-filter>
-                          <action android:name="android.intent.action.MAIN" />
-                          <category android:name="android.intent.category.LAUNCHER" />
-                      </intent-filter>
-                  </activity>
-              </application>
-          </manifest>
-          EOF
+          # 2. Записываем Манифест через безопасную строку (без потери атрибутов android:name)
+          echo '<manifest xmlns:android="http://android.com" package="com.liberty.vpn"><application android:label="Liberty VPN"><activity android:name="com.liberty.vpn.MainActivity" android:exported="true"><intent-filter><action android:name="android.intent.action.MAIN" /><category android:name="android.intent.category.LAUNCHER" /></intent-filter></activity></application></manifest>' > app/src/main/AndroidManifest.xml
 
-          # 3. Записываем чистый Java-код
+          # 3. Записываем чистую Java-логику приложения
           cat << 'EOF' > app/src/main/java/com/liberty/vpn/MainActivity.java
           package com.liberty.vpn;
           import android.os.Bundle;
@@ -68,18 +57,19 @@ jobs:
           }
           EOF
 
-          # 4. Компилируем ресурсы и код напрямую с помощью Android SDK (минуя интернет-блокировки)
+          # 4. Линкуем ресурсы и компилируем Java-код с помощью официальных утилит Android SDK
           SDK=$ANDROID_HOME/platforms/android-34/android.jar
           $ANDROID_HOME/build-tools/34.0.0/aapt2 compile --dir app/src/main/res -o build/res.zip || true
           $ANDROID_HOME/build-tools/34.0.0/aapt2 link --manifest app/src/main/AndroidManifest.xml -I $SDK -o build/base.apk build/res.zip --java build/gen --custom-package com.liberty.vpn
           
           javac -target 17 -source 17 -bootclasspath $SDK -d build/obj app/src/main/java/com/liberty/vpn/MainActivity.java
           
+          # 5. Трансформируем Java-классы в байт-код Dalvik (classes.dex)
           $ANDROID_HOME/build-tools/34.0.0/d8 build/obj/com/liberty/vpn/*.class --output build/apk/ --lib $SDK
           
-          # 5. Собираем финальный архив
+          # 6. Упаковываем скомпилированный код внутрь базового APK-пакета
           cd build/apk && zip -r ../../Liberty_VPN.apk classes.dex && cd ../..
-          $ANDROID_HOME/build-tools/34.0.0/aapt2 link --manifest app/src/main/AndroidManifest.xml -I $SDK -o Liberty_VPN_Final.apk --static-lib build/base.apk build/apk/classes.dex || cp build/base.apk Liberty_VPN_Final.apk
+          cp build/base.apk Liberty_VPN_Final.apk
           zip -g Liberty_VPN_Final.apk build/apk/classes.dex
 
       - name: Upload APK Artifact

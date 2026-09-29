@@ -23,9 +23,9 @@ jobs:
           mkdir -p app/src/main/res/values
           mkdir -p build/gen build/obj build/apk
           
-          # 2. Записываем Манифест
+          # 2. Записываем Манифест с точными системными атрибутами package и name
           cat << 'EOF' > app/src/main/AndroidManifest.xml
-          <manifest xmlns:android="http://android.com">
+          <manifest xmlns:android="http://android.com" package="com.liberty.vpn">
               <application android:label="Liberty VPN">
                   <activity android:name="com.liberty.vpn.MainActivity" android:exported="true">
                       <intent-filter>

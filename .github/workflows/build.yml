@@ -23,8 +23,20 @@ jobs:
           mkdir -p app/src/main/res/values
           mkdir -p build/gen build/obj build/apk
           
-          # 2. Декодируем Манифест с флагом чистой строки без лишних символов переноса
-          echo -n "PG1hbmlmZXN0IHhtbG5zOmFuZHJvaWQ9Imh0dHA6Ly9zY2hlbWFzLmFuZHJvaWQuY29tL2Fway9yZXMvYW5kcm9pZCIgcGFja2FnZT0iY29tLmxpYmVydHkudnBuIj48YXBwbGljYXRpb24gYW5kcm9pZDpsYWJlbD0iTGliZXJ0eSBWUE4iPjhhY3Rpdml0eSBhbmRyb2lkOm5hbWU9ImNvbS5saWJlcnR5LnZwbi5NYWluQWN0aXZpdHkiIGFuZHJvaWQ6ZXhwb3J0ZWQ9InRydWUiPjxpbnRlbnQtZmlsdGVyPjhhY3Rpb24gYW5kcm9pZDpuYW1lPSJhbmRyb2lkLmludGVudC5hY3Rpb24uTUFJTiIgLz48Y2F0ZWdvcnkgYW5kcm9pZDpuYW1lPSJhbmRyb2lkLmludGVudC5jYXRlZ29yeS5MQVVOQ0hFUiIgLz48L2ludGVudC1maWx0ZXI+PC9hY3Rpdml0eT48L2FwcGxpY2F0aW9uPjwvbWFuaWZlc3Q+" | base64 -d | tr -d '\r\n' > app/src/main/AndroidManifest.xml
+          # 2. Записываем чистый XML Манифест в изолированном блоке
+          cat << 'XML' > app/src/main/AndroidManifest.xml
+          <?xml version="1.0" encoding="utf-8"?>
+          <manifest xmlns:android="http://android.com" package="com.liberty.vpn">
+              <application android:label="Liberty VPN">
+                  <activity android:name="com.liberty.vpn.MainActivity" android:exported="true">
+                      <intent-filter>
+                          <action android:name="android.intent.action.MAIN" />
+                          <category android:name="android.intent.category.LAUNCHER" />
+                      </intent-filter>
+                  </activity>
+              </application>
+          </manifest>
+          XML
 
           # 3. Записываем чистую Java-логику приложения
           cat << 'EOF' > app/src/main/java/com/liberty/vpn/MainActivity.java

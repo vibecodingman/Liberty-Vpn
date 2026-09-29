@@ -7,7 +7,7 @@ pluginManagement {
 }
 dependencyResolutionManagement {
     // Меняем строгий режим FAIL_ON_PROJECT_REPOS на более мягкий, чтобы модули могли сами докачивать библиотеки
-    repositoriesMode.set(RepositoriesMode.PRESERVE_SETTINGS)
+    repositoriesMode.set(RepositoriesMode.PRESERVE_ON_USE)
     repositories {
         google()
         mavenCentral()
